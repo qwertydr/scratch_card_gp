@@ -1,144 +1,140 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#008542" />
-  <meta name="description" content="Easy Gold Scratch Card experience" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#008542">
+  <meta name="description" content="Easy Gold scratch card experience">
   <title>Easy Gold Scratch Card</title>
-
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div id="confetti-layer" aria-hidden="true"></div>
+  <div id="fx-layer" aria-hidden="true"></div>
 
   <header class="site-header">
-    <div class="brand-wrap">
-      <div class="brand-mark">GP</div>
+    <div class="brand">
+      <div class="brand-badge">GP</div>
       <div>
-        <div class="brand-title">Easy Gold</div>
-        <div class="brand-subtitle">Scratch &amp; Reveal</div>
+        <strong>Easy Gold</strong>
+        <span>Classic Scratch Card</span>
       </div>
     </div>
-    <div class="header-pill">CLASSIC COLLECTION</div>
+    <div class="header-chip">CLAIM • SCRATCH • REVEAL</div>
   </header>
 
   <main>
     <section class="hero">
-      <div class="hero-glow"></div>
-      <p class="eyebrow">A LITTLE SURPRISE AWAITS</p>
+      <p class="eyebrow">A CLASSIC CARD EXPERIENCE</p>
       <h1>Claim your <span>Easy Gold</span> card</h1>
-      <p class="hero-copy">
-        Choose a card below, flip it open, then slide the scissors across the scratch strip
-        to reveal the secret number.
-      </p>
+      <p>Pick a card, open the physical-looking back, then drag the scissors across the covered number. The coating is removed exactly where you scratch.</p>
     </section>
 
-    <section class="cards-section" aria-label="Available scratch cards">
+    <section class="cards-section" aria-label="Available Easy Gold cards">
       <div id="card-grid" class="card-grid"></div>
-      <div id="empty-state" class="empty-state hidden">
-        No cards are available right now.
-      </div>
+      <div id="empty-state" class="empty-state hidden">No cards are available right now.</div>
     </section>
   </main>
 
-  <!-- Claim / scratch modal -->
-  <div id="card-modal" class="modal" aria-hidden="true">
+  <div id="modal" class="modal" aria-hidden="true">
     <div class="modal-backdrop" data-close-modal></div>
 
-    <section class="scratch-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-      <button class="close-button" type="button" aria-label="Close" data-close-modal>×</button>
+    <section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <button class="modal-close" type="button" aria-label="Close" data-close-modal>×</button>
 
-      <div class="modal-topline">
-        <span id="modal-validity" class="validity-badge">VALIDITY: —</span>
+      <div class="modal-meta">
+        <span id="modal-validity">VALIDITY: —</span>
       </div>
 
-      <div id="flip-stage" class="flip-stage">
-        <div id="scratch-card" class="scratch-card">
-          <div class="scratch-face scratch-front">
-            <div class="front-cover">
-              <img id="modal-cover" src="" alt="" />
-              <div class="cover-shade"></div>
-              <div class="front-logo">Easy Gold</div>
-              <div class="front-caption">Tap claim to open</div>
+      <div class="flip-scene">
+        <div id="card-shell" class="card-shell">
+          <div class="card-face card-front">
+            <div class="front-art">
+              <img id="front-image" alt="">
+              <div class="front-overlay"></div>
+              <div class="front-brand">Easy Gold</div>
+              <div class="front-small">CLASSIC RECHARGE CARD</div>
+              <div class="front-stamp">CLAIM</div>
             </div>
           </div>
 
-          <div class="scratch-face scratch-back">
-            <div class="back-inner">
-              <div class="back-brand">Easy Gold</div>
-              <p class="back-kicker">YOUR SECRET NUMBER</p>
+          <div class="card-face card-back">
+            <div class="real-back">
+              <img id="real-back-image" src="assets/real-card-back.jpg" alt="Reference of the physical card back">
 
-              <div id="scratch-area" class="scratch-area">
-                <div id="secret-number" class="secret-number">•••• •••• ••••</div>
-                <div class="scratch-coating">
-                  <div class="coating-shimmer"></div>
-                  <span>SLIDE THE SCISSORS</span>
+              <div id="secret-zone" class="secret-zone">
+                <div class="secret-underlay">
+                  <div class="mini-barcode" aria-hidden="true"></div>
+                  <div class="secret-number">0171 1234 5678</div>
+                  <div class="mini-barcode barcode-right" aria-hidden="true"></div>
+                </div>
+
+                <canvas id="scratch-canvas" aria-label="Scratch area"></canvas>
+                <div id="scissor" class="scissor">✂</div>
+
+                <div class="scratch-hint" id="scratch-hint">
+                  <span>DRAG TO SCRATCH</span>
                 </div>
               </div>
 
-              <div class="instruction-row">
-                <div id="scissor-hint" class="scissor-hint">
-                  <span class="scissor-icon" aria-hidden="true">✂</span>
-                  <span>Drag across the strip</span>
-                </div>
-                <div id="progress-label" class="progress-label">0%</div>
-              </div>
-
-              <div class="progress-track" aria-hidden="true">
-                <div id="progress-bar" class="progress-bar"></div>
-              </div>
-
-              <div id="revealed-message" class="revealed-message" hidden>
-                <span class="success-icon">✓</span>
-                Number revealed successfully!
-              </div>
+              <div class="authenticity-shine"></div>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="modal-footer">
-        <h2 id="modal-title">Scratch Card</h2>
-        <p id="modal-description">Follow the animation above to reveal your number.</p>
-        <button id="scratch-again-button" class="secondary-button" type="button" hidden>
-          Scratch Again
-        </button>
+      <div class="modal-copy">
+        <h2 id="modal-title">Easy Gold</h2>
+        <p id="modal-description">Use the scissors to remove the silver coating from the number strip.</p>
+
+        <div class="scratch-status">
+          <div class="status-line">
+            <span id="status-text">0% scratched</span>
+            <span id="status-distance">Start at the left and sweep across</span>
+          </div>
+          <div class="status-track">
+            <div id="status-fill"></div>
+          </div>
+        </div>
+
+        <div id="success-message" class="success-message" hidden>
+          <span class="success-check">✓</span>
+          <span>Your number has been fully revealed.</span>
+        </div>
+
+        <button id="reset-button" class="reset-button" type="button" hidden>Scratch Again</button>
       </div>
     </section>
   </div>
 
   <template id="card-template">
     <article class="claim-card">
-      <div class="claim-card-art">
-        <img class="claim-cover" src="" alt="" loading="lazy" />
-        <div class="art-overlay"></div>
-        <span class="mini-validity"></span>
-        <span class="claim-shimmer"></span>
+      <div class="card-thumb">
+        <img class="thumb-image" alt="" loading="lazy">
+        <div class="thumb-shine"></div>
+        <span class="thumb-validity"></span>
       </div>
-      <div class="claim-card-body">
-        <div class="claim-card-heading">
+      <div class="card-body">
+        <div class="card-title-row">
           <div>
-            <p class="claim-kicker">EASY GOLD</p>
-            <h2 class="claim-name"></h2>
+            <div class="card-kicker">EASY GOLD</div>
+            <h2 class="card-name"></h2>
           </div>
-          <span class="claim-number">••••</span>
+          <div class="card-dots">••••</div>
         </div>
-        <p class="claim-description"></p>
+        <p class="card-description"></p>
         <button class="claim-button" type="button">
           <span>Claim Card</span>
-          <span class="arrow">→</span>
+          <span>→</span>
         </button>
       </div>
     </article>
   </template>
 
-  <footer class="site-footer">
-    <p>Static demo interface • Data is loaded from <code>cards.json</code></p>
+  <footer class="footer">
+    <span>Data source: <code>cards.json</code></span>
   </footer>
 
   <script src="app.js"></script>

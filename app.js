@@ -7,156 +7,141 @@
     scratching: false,
     revealed: false,
     progress: 0,
-    startX: null,
-    lastX: null,
-    maxDragDistance: 0,
-    scratchTimer: null
+    horizontalTravel: 0,
+    minX: Infinity,
+    maxX: -Infinity,
+    lastPoint: null,
+    currentPoint: null,
+    pointerId: null,
+    particlesAt: 0
   };
 
-  const els = {};
+  const el = {};
 
   document.addEventListener("DOMContentLoaded", init);
 
   async function init() {
-    cacheElements();
-    bindGlobalEvents();
+    cache();
+    bind();
     await loadCards();
   }
 
-  function cacheElements() {
-    els.cardGrid = document.getElementById("card-grid");
-    els.emptyState = document.getElementById("empty-state");
-    els.template = document.getElementById("card-template");
+  function cache() {
+    el.grid = document.getElementById("card-grid");
+    el.empty = document.getElementById("empty-state");
+    el.template = document.getElementById("card-template");
 
-    els.modal = document.getElementById("card-modal");
-    els.scratchModal = document.querySelector(".scratch-modal");
-    els.scratchCard = document.getElementById("scratch-card");
-    els.flipStage = document.getElementById("flip-stage");
+    el.modal = document.getElementById("modal");
+    el.cardShell = document.getElementById("card-shell");
+    el.frontImage = document.getElementById("front-image");
+    el.realBackImage = document.getElementById("real-back-image");
+    el.title = document.getElementById("modal-title");
+    el.description = document.getElementById("modal-description");
+    el.validity = document.getElementById("modal-validity");
 
-    els.modalTitle = document.getElementById("modal-title");
-    els.modalDescription = document.getElementById("modal-description");
-    els.modalValidity = document.getElementById("modal-validity");
-    els.modalCover = document.getElementById("modal-cover");
+    el.zone = document.getElementById("secret-zone");
+    el.canvas = document.getElementById("scratch-canvas");
+    el.ctx = el.canvas.getContext("2d", { willReadFrequently: true });
+    el.scissor = document.getElementById("scissor");
+    el.hint = document.getElementById("scratch-hint");
 
-    els.scratchArea = document.getElementById("scratch-area");
-    els.scratchCoating = document.querySelector(".scratch-coating");
-    els.secretNumber = document.getElementById("secret-number");
-    els.scissorHint = document.getElementById("scissor-hint");
-    els.progressLabel = document.getElementById("progress-label");
-    els.progressBar = document.getElementById("progress-bar");
-    els.revealedMessage = document.getElementById("revealed-message");
-    els.scratchAgain = document.getElementById("scratch-again-button");
+    el.statusText = document.getElementById("status-text");
+    el.statusDistance = document.getElementById("status-distance");
+    el.statusFill = document.getElementById("status-fill");
+    el.success = document.getElementById("success-message");
+    el.reset = document.getElementById("reset-button");
   }
 
-  function bindGlobalEvents() {
+  function bind() {
     document.addEventListener("click", (event) => {
-      const claimButton = event.target.closest("[data-card-index]");
-      if (claimButton) {
-        const index = Number(claimButton.dataset.cardIndex);
-        openCard(index);
-      }
-
-      if (event.target.closest("[data-close-modal]")) {
-        closeModal();
-      }
+      const trigger = event.target.closest("[data-card-index]");
+      if (trigger) openCard(Number(trigger.dataset.cardIndex));
+      if (event.target.closest("[data-close-modal]")) closeModal();
     });
 
-    els.scratchAgain.addEventListener("click", resetScratch);
+    el.reset.addEventListener("click", resetScratch);
 
     document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape" && els.modal.classList.contains("open")) {
-        closeModal();
-      }
+      if (event.key === "Escape" && el.modal.classList.contains("open")) closeModal();
     });
 
-    els.scratchArea.addEventListener("pointerdown", handlePointerDown, { passive: false });
-    els.scratchArea.addEventListener("pointermove", handlePointerMove, { passive: false });
-    els.scratchArea.addEventListener("pointerup", handlePointerUp, { passive: false });
-    els.scratchArea.addEventListener("pointercancel", handlePointerUp, { passive: false });
-
-    // A click anywhere in the scratch area gives a small nudge on touch screens.
-    els.scratchArea.addEventListener("click", () => {
-      if (!state.revealed) {
-        setProgress(Math.min(10, state.progress + 5));
-      }
-    });
+    el.zone.addEventListener("pointerdown", onPointerDown, { passive: false });
+    el.zone.addEventListener("pointermove", onPointerMove, { passive: false });
+    el.zone.addEventListener("pointerup", onPointerUp, { passive: false });
+    el.zone.addEventListener("pointercancel", onPointerUp, { passive: false });
   }
 
   async function loadCards() {
     try {
-      const response = await fetch("cards.json", { cache: "no-cache" });
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-
-      const payload = await response.json();
-      state.cards = normalizeCards(payload);
+      const res = await fetch("cards.json", { cache: "no-cache" });
+      if (!res.ok) throw new Error(`cards.json: HTTP ${res.status}`);
+      const data = await res.json();
+      state.cards = (Array.isArray(data) ? data : data.cards || []).map((card, i) => ({
+        id: String(card.id ?? `card-${i + 1}`),
+        name: String(card.name ?? `Easy Gold ${i + 1}`),
+        description: String(card.description ?? "Scratch the strip to reveal the hidden number."),
+        barNumber: String(card.barNumber ?? "0000 0000 0000"),
+        validity: String(card.validity ?? "VALIDITY: 30 DAYS"),
+        coverImage: String(card.coverImage ?? ""),
+        accent: normalizeAccent(card.accent)
+      }));
       renderCards();
     } catch (error) {
-      console.error("Unable to load cards.json:", error);
+      console.error(error);
       state.cards = [];
       renderCards();
     }
   }
 
-  function normalizeCards(payload) {
-    const cards = Array.isArray(payload) ? payload : payload.cards;
-
-    if (!Array.isArray(cards)) {
-      throw new Error("cards.json must contain an array or a { cards: [] } object.");
-    }
-
-    return cards
-      .filter(Boolean)
-      .map((card, index) => ({
-        id: String(card.id ?? `card-${index + 1}`),
-        name: String(card.name ?? `Easy Gold Card ${index + 1}`),
-        description: String(card.description ?? "Scratch to reveal your secret number."),
-        barNumber: String(card.barNumber ?? "0000 0000 0000"),
-        validity: String(card.validity ?? "VALIDITY: 30 DAYS"),
-        coverImage: String(card.coverImage ?? ""),
-        accent: String(card.accent ?? "green")
-      }));
+  function normalizeAccent(value) {
+    if (typeof value !== "string") return "#008542";
+    const v = value.trim();
+    if (/^#[0-9a-f]{3,8}$/i.test(v)) return v;
+    const named = {
+      red: "#b4202a",
+      green: "#008542",
+      blue: "#1769aa",
+      black: "#161616",
+      gold: "#b08300",
+      purple: "#6941a5",
+      orange: "#c55b1a"
+    };
+    return named[v.toLowerCase()] || "#008542";
   }
 
   function renderCards() {
-    els.cardGrid.innerHTML = "";
-
+    el.grid.innerHTML = "";
     if (!state.cards.length) {
-      els.emptyState.classList.remove("hidden");
+      el.empty.classList.remove("hidden");
       return;
     }
+    el.empty.classList.add("hidden");
 
-    els.emptyState.classList.add("hidden");
-
-    const fragment = document.createDocumentFragment();
+    const frag = document.createDocumentFragment();
 
     state.cards.forEach((card, index) => {
-      const node = els.template.content.cloneNode(true);
-
+      const node = el.template.content.cloneNode(true);
       const article = node.querySelector(".claim-card");
-      const cover = node.querySelector(".claim-cover");
-      const validity = node.querySelector(".mini-validity");
-      const name = node.querySelector(".claim-name");
-      const description = node.querySelector(".claim-description");
-      const claimButton = node.querySelector(".claim-button");
+      const image = node.querySelector(".thumb-image");
+      const validity = node.querySelector(".thumb-validity");
+      const name = node.querySelector(".card-name");
+      const desc = node.querySelector(".card-description");
+      const btn = node.querySelector(".claim-button");
 
-      article.dataset.cardId = card.id;
-      cover.src = card.coverImage;
-      cover.alt = `${card.name} cover`;
-      cover.addEventListener("error", () => {
-        cover.src = makeFallbackCover(index);
-      }, { once: true });
-
+      article.style.setProperty("--theme", card.accent);
+      article.dataset.cardIndex = index;
+      image.src = card.coverImage;
+      image.alt = `${card.name} cover`;
+      image.onerror = () => image.src = fallbackCover(card.accent);
       validity.textContent = card.validity;
       name.textContent = card.name;
-      description.textContent = card.description;
-      claimButton.dataset.cardIndex = String(index);
+      desc.textContent = card.description;
+      btn.dataset.cardIndex = index;
 
-      fragment.appendChild(node);
+      frag.appendChild(node);
     });
 
-    els.cardGrid.appendChild(fragment);
+    el.grid.appendChild(frag);
   }
 
   function openCard(index) {
@@ -164,237 +149,400 @@
     if (!card) return;
 
     state.activeCard = card;
-    state.scratching = false;
-    state.revealed = false;
-    state.progress = 0;
+    applyTheme(card.accent);
 
-    clearTimeout(state.scratchTimer);
+    el.title.textContent = card.name;
+    el.description.textContent = "Use the scissors to remove the silver coating from the hidden number.";
+    el.validity.textContent = card.validity;
 
-    els.modalCover.src = card.coverImage;
-    els.modalCover.alt = `${card.name} cover`;
-    els.modalCover.onerror = () => {
-      els.modalCover.src = makeFallbackCover(index);
-      els.modalCover.onerror = null;
+    el.frontImage.src = card.coverImage;
+    el.frontImage.alt = `${card.name} front`;
+    el.frontImage.onerror = () => el.frontImage.src = fallbackCover(card.accent);
+
+    el.realBackImage.onerror = () => {
+      el.realBackImage.onerror = null;
+      el.realBackImage.src = fallbackBack();
     };
 
-    els.modalTitle.textContent = card.name;
-    els.modalDescription.textContent = card.description;
-    els.modalValidity.textContent = card.validity;
-    els.secretNumber.textContent = card.barNumber;
+    resetScratch();
+    el.cardShell.classList.remove("flipped");
 
-    resetScratchVisuals();
-    els.scratchCard.classList.remove("flipped");
-
-    els.modal.classList.add("open");
-    els.modal.setAttribute("aria-hidden", "false");
+    el.modal.classList.add("open");
+    el.modal.setAttribute("aria-hidden", "false");
     document.body.style.overflow = "hidden";
 
-    // Let the browser paint the front side before starting the flip.
     requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        els.scratchCard.classList.add("flipped");
-      });
+      requestAnimationFrame(() => el.cardShell.classList.add("flipped"));
     });
   }
 
   function closeModal() {
-    els.modal.classList.remove("open");
-    els.modal.setAttribute("aria-hidden", "true");
+    el.modal.classList.remove("open");
+    el.modal.setAttribute("aria-hidden", "true");
     document.body.style.overflow = "";
-    clearTimeout(state.scratchTimer);
+    state.activeCard = null;
+    state.scratching = false;
+  }
+
+  function applyTheme(color) {
+    document.documentElement.style.setProperty("--theme", color);
+    document.documentElement.style.setProperty("--theme-dark", shade(color, -22));
+    document.documentElement.style.setProperty("--theme-soft", tint(color, 88));
   }
 
   function resetScratch() {
     state.scratching = false;
     state.revealed = false;
     state.progress = 0;
-    state.startX = null;
-    state.lastX = null;
+    state.horizontalTravel = 0;
+    state.minX = Infinity;
+    state.maxX = -Infinity;
+    state.lastPoint = null;
+    state.pointerId = null;
 
-    resetScratchVisuals();
-    els.scratchAgain.hidden = true;
-    els.revealedMessage.hidden = true;
+    el.success.hidden = true;
+    el.reset.hidden = true;
+    el.scissor.classList.remove("active", "complete");
+    el.hint.hidden = false;
+    el.hint.textContent = "DRAG TO SCRATCH";
+    el.statusText.textContent = "0% scratched";
+    el.statusDistance.textContent = "Start at the left and sweep across";
+    el.statusFill.style.width = "0%";
+
+    resizeCanvas();
+    drawScratchCoating();
   }
 
-  function resetScratchVisuals() {
-    els.scratchCoating.style.opacity = "1";
-    els.progressBar.style.width = "0%";
-    els.progressLabel.textContent = "0%";
-    els.scissorHint.innerHTML = '<span class="scissor-icon" aria-hidden="true">✂</span><span>Drag across the strip</span>';
+  function resizeCanvas() {
+    const rect = el.zone.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+    el.canvas.width = Math.max(1, Math.round(rect.width * dpr));
+    el.canvas.height = Math.max(1, Math.round(rect.height * dpr));
+    el.canvas.style.width = `${rect.width}px`;
+    el.canvas.style.height = `${rect.height}px`;
+
+    el.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
 
-  function handlePointerDown(event) {
+  function drawScratchCoating() {
+    const rect = el.zone.getBoundingClientRect();
+    const ctx = el.ctx;
+
+    ctx.clearRect(0, 0, rect.width, rect.height);
+
+    // Base material: looks more like a metallic / worn scratch patch than a flat gray div.
+    const gradient = ctx.createLinearGradient(0, 0, 0, rect.height);
+    gradient.addColorStop(0, "#d1d6d2");
+    gradient.addColorStop(.47, "#a8b0ab");
+    gradient.addColorStop(1, "#c4cac6");
+
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, rect.width, rect.height);
+
+    // Fine paper/foil grain.
+    for (let i = 0; i < Math.floor(rect.width * 0.7); i++) {
+      const x = Math.random() * rect.width;
+      const y = Math.random() * rect.height;
+      const len = 3 + Math.random() * 12;
+
+      ctx.strokeStyle = Math.random() > .5 ? "rgba(255,255,255,.13)" : "rgba(58,68,63,.10)";
+      ctx.lineWidth = .6 + Math.random() * .7;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + len, y + (Math.random() - .5) * 2);
+      ctx.stroke();
+    }
+
+    // Cross scratches / print irregularity.
+    ctx.globalAlpha = .12;
+    ctx.strokeStyle = "#43504a";
+    ctx.lineWidth = 1;
+    for (let y = 5; y < rect.height; y += 7) {
+      ctx.beginPath();
+      ctx.moveTo(0, y + Math.random() * 1.5);
+      ctx.lineTo(rect.width, y + (Math.random() - .5) * 2);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+
+    // Center instruction remains on the actual coating.
+    ctx.fillStyle = "rgba(42,50,46,.74)";
+    ctx.font = `900 ${Math.max(9, Math.min(12, rect.width / 32))}px Inter, Arial, sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("SCRATCH TO REVEAL", rect.width / 2, rect.height / 2);
+  }
+
+  function onPointerDown(event) {
     if (state.revealed || !state.activeCard) return;
 
     event.preventDefault();
     state.scratching = true;
-    state.startX = event.clientX;
-    state.lastX = event.clientX;
+    state.pointerId = event.pointerId;
 
-    try {
-      els.scratchArea.setPointerCapture(event.pointerId);
-    } catch (_) {
-      // Pointer capture is optional.
-    }
+    try { el.zone.setPointerCapture(event.pointerId); } catch (_) {}
 
-    els.scissorHint.innerHTML = '<span class="scissor-icon" aria-hidden="true">✂</span><span>Keep sliding...</span>';
+    const p = pointInZone(event);
+    state.lastPoint = p;
+    state.minX = Math.min(state.minX, p.x);
+    state.maxX = Math.max(state.maxX, p.x);
+
+    el.scissor.classList.add("active");
+    updateScissor(p);
+    scratchAt(p.x, p.y, 10);
+    emitScratchDust(p, 4);
+
+    el.hint.hidden = true;
   }
 
-  function handlePointerMove(event) {
-    if (!state.scratching || state.revealed) return;
+  function onPointerMove(event) {
+    if (!state.scratching || event.pointerId !== state.pointerId || state.revealed) return;
 
     event.preventDefault();
 
-    const rect = els.scratchArea.getBoundingClientRect();
-    const x = Math.max(rect.left, Math.min(rect.right, event.clientX));
-    const localX = x - rect.left;
+    const p = pointInZone(event);
+    const last = state.lastPoint || p;
 
-    const movement = Math.abs(x - (state.lastX ?? x));
-    const normalizedMove = rect.width ? (movement / rect.width) * 100 : 0;
+    // Draw a continuous "eraser" stroke so dragging feels like physically removing material.
+    const distance = Math.hypot(p.x - last.x, p.y - last.y);
+    drawScratchStroke(last, p, 11);
 
-    state.lastX = x;
+    state.horizontalTravel += Math.abs(p.x - last.x);
+    state.minX = Math.min(state.minX, p.x);
+    state.maxX = Math.max(state.maxX, p.x);
+    state.lastPoint = p;
 
-    // Direct horizontal movement increases the reveal.
-    // A little extra is granted when the pointer is actively traveling through the bar.
-    const boost = normalizedMove * 1.55;
-    const sweepProgress = rect.width ? (localX / rect.width) * 12 : 0;
+    updateScissor(p);
 
-    setProgress(
-      Math.max(
-        state.progress + boost,
-        Math.min(100, state.progress + sweepProgress * 0.025)
-      )
-    );
+    if (performance.now() - state.particlesAt > 38) {
+      emitScratchDust(p, 2);
+      state.particlesAt = performance.now();
+    }
+
+    updateProgress();
   }
 
-  function handlePointerUp(event) {
-    if (!state.scratching) return;
+  function onPointerUp(event) {
+    if (!state.scratching || event.pointerId !== state.pointerId) return;
 
     state.scratching = false;
-
-    try {
-      els.scratchArea.releasePointerCapture(event.pointerId);
-    } catch (_) {
-      // Not all browsers support pointer capture.
-    }
+    try { el.zone.releasePointerCapture(event.pointerId); } catch (_) {}
 
     if (!state.revealed) {
-      els.scissorHint.innerHTML = '<span class="scissor-icon" aria-hidden="true">✂</span><span>Drag across the strip again</span>';
+      el.statusDistance.textContent =
+        state.maxX > state.minX && state.horizontalTravel > 40
+          ? "Keep sweeping across the covered strip"
+          : "Start at the left and make a long sweep";
     }
   }
 
-  function setProgress(value) {
-    if (state.revealed) return;
+  function pointInZone(event) {
+    const r = el.zone.getBoundingClientRect();
+    return {
+      x: Math.max(0, Math.min(r.width, event.clientX - r.left)),
+      y: Math.max(0, Math.min(r.height, event.clientY - r.top))
+    };
+  }
 
-    state.progress = Math.max(0, Math.min(100, value));
-    els.progressBar.style.width = `${state.progress.toFixed(1)}%`;
-    els.progressLabel.textContent = `${Math.round(state.progress)}%`;
+  function updateScissor(p) {
+    el.scissor.style.left = `${p.x}px`;
+    el.scissor.style.top = `${p.y}px`;
+  }
 
-    // Make the coating fade gradually instead of vanishing all at once.
-    const opacity = Math.max(0, 1 - (state.progress / 100) * 1.08);
-    els.scratchCoating.style.opacity = opacity.toFixed(3);
+  function drawScratchStroke(a, b, radius) {
+    const ctx = el.ctx;
+    const steps = Math.max(2, Math.ceil(Math.hypot(b.x - a.x, b.y - a.y) / 4));
 
-    if (state.progress >= 100) {
-      revealCard();
+    for (let i = 0; i <= steps; i++) {
+      const t = i / steps;
+      const x = a.x + (b.x - a.x) * t;
+      const y = a.y + (b.y - a.y) * t;
+      scratchAt(x, y, radius);
     }
   }
 
-  function revealCard() {
+  function scratchAt(x, y, radius) {
+    const ctx = el.ctx;
+    ctx.save();
+    ctx.globalCompositeOperation = "destination-out";
+
+    // Slightly irregular scratch shape.
+    ctx.beginPath();
+    ctx.ellipse(x, y, radius * 1.15, radius * .82, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Several tiny offsets make the abrasion less perfectly digital.
+    ctx.beginPath();
+    ctx.arc(x + (Math.random() - .5) * 5, y + (Math.random() - .5) * 4, radius * .34, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  function updateProgress() {
+    const r = el.zone.getBoundingClientRect();
+    const width = Math.max(1, r.width);
+
+    // Long physical sweep matters, not just repeated taps.
+    const travelScore = Math.min(100, (state.horizontalTravel / (width * 1.05)) * 100);
+    const spanScore = state.maxX > state.minX ? Math.min(100, ((state.maxX - state.minX) / width) * 100) : 0;
+
+    // Measure how much of the coating has actually been removed.
+    const pixelScore = canvasRevealPercent();
+
+    // A long horizontal sweep contributes strongly; actual material removal contributes the rest.
+    const progress = Math.min(100, pixelScore * .66 + travelScore * .24 + spanScore * .10);
+
+    state.progress = progress;
+    el.statusFill.style.width = `${progress}%`;
+    el.statusText.textContent = `${Math.round(progress)}% scratched`;
+
+    if (spanScore < 28) {
+      el.statusDistance.textContent = "Move farther across the strip";
+    } else if (spanScore < 72) {
+      el.statusDistance.textContent = "Good — keep sliding through the card";
+    } else {
+      el.statusDistance.textContent = "Almost there — finish the long sweep";
+    }
+
+    // Finish threshold is intentionally high so the card cannot reveal from a few taps.
+    if (pixelScore >= 78 && spanScore >= 78 && state.horizontalTravel >= width * .92) {
+      reveal();
+    }
+  }
+
+  function canvasRevealPercent() {
+    const canvas = el.canvas;
+    const w = canvas.width;
+    const h = canvas.height;
+    const sampleStep = Math.max(2, Math.round(Math.min(w, h) / 65));
+    const pixels = el.ctx.getImageData(0, 0, w, h).data;
+
+    let total = 0;
+    let transparent = 0;
+
+    for (let y = 0; y < h; y += sampleStep) {
+      for (let x = 0; x < w; x += sampleStep) {
+        const alpha = pixels[(y * w + x) * 4 + 3];
+        total++;
+        if (alpha < 55) transparent++;
+      }
+    }
+
+    return total ? (transparent / total) * 100 : 0;
+  }
+
+  function reveal() {
     if (state.revealed) return;
 
     state.revealed = true;
     state.scratching = false;
     state.progress = 100;
 
-    els.scratchCoating.style.opacity = "0";
-    els.progressBar.style.width = "100%";
-    els.progressLabel.textContent = "100%";
-    els.scissorHint.innerHTML = '<span class="scissor-icon" aria-hidden="true">✂</span><span>Revealed!</span>';
-    els.revealedMessage.hidden = false;
-    els.scratchAgain.hidden = false;
+    el.ctx.clearRect(0, 0, el.canvas.width, el.canvas.height);
+    el.statusFill.style.width = "100%";
+    el.statusText.textContent = "100% revealed";
+    el.statusDistance.textContent = "Scratch complete";
+    el.scissor.classList.add("complete");
+    el.hint.hidden = true;
+    el.success.hidden = false;
+    el.reset.hidden = false;
+    el.description.textContent = `Your card number is ${state.activeCard.barNumber}.`;
 
-    els.modalDescription.textContent = "Your Easy Gold number is now visible.";
-    fireConfetti();
-
-    // Give the number a tiny emphasis animation.
-    els.secretNumber.animate(
-      [
-        { transform: "scale(1)", opacity: 0.72 },
-        { transform: "scale(1.08)", opacity: 1 },
-        { transform: "scale(1)", opacity: 1 }
-      ],
-      {
-        duration: 620,
-        easing: "cubic-bezier(.2,.8,.2,1)"
-      }
-    );
-  }
-
-  function fireConfetti() {
-    const layer = document.getElementById("confetti-layer");
-
-    // Keep the animation light enough for phones.
-    const colors = ["#008542", "#00a357", "#f4c542", "#ffd865", "#ffffff"];
-    const count = 90;
-
-    for (let i = 0; i < count; i++) {
-      const piece = document.createElement("span");
-      piece.className = "confetti-piece";
-
-      const left = Math.random() * 100;
-      const width = 6 + Math.random() * 6;
-      const height = 9 + Math.random() * 10;
-      const duration = 1.8 + Math.random() * 1.7;
-      const delay = Math.random() * 0.35;
-      const drift = (Math.random() - 0.5) * 240;
-      const spin = `${Math.round((Math.random() - 0.5) * 1000)}deg`;
-
-      piece.style.left = `${left}%`;
-      piece.style.width = `${width}px`;
-      piece.style.height = `${height}px`;
-      piece.style.background = colors[Math.floor(Math.random() * colors.length)];
-      piece.style.setProperty("--fall-duration", `${duration}s`);
-      piece.style.setProperty("--fall-delay", `${delay}s`);
-      piece.style.setProperty("--drift", `${drift}px`);
-      piece.style.setProperty("--spin", spin);
-
-      layer.appendChild(piece);
-
-      window.setTimeout(() => piece.remove(), (duration + delay + 0.25) * 1000);
+    // Magical "rub-off" dust stays around the scratch area rather than falling from the top.
+    const r = el.zone.getBoundingClientRect();
+    for (let i = 0; i < 38; i++) {
+      const point = {
+        x: Math.random() * r.width,
+        y: Math.random() * r.height
+      };
+      emitScratchDust(point, 1, true);
     }
   }
 
-  function makeFallbackCover(index) {
-    const palettes = [
-      ["#006a35", "#00a357", "#f4c542"],
-      ["#005f36", "#0ca26a", "#ffd865"],
-      ["#0a7143", "#00a16a", "#f2c24a"]
-    ];
+  function emitScratchDust(p, count = 2, celebratory = false) {
+    const zoneRect = el.zone.getBoundingClientRect();
 
-    const [a, b, c] = palettes[index % palettes.length];
+    for (let i = 0; i < count; i++) {
+      const dot = document.createElement("span");
+      dot.className = "fx-particle";
 
+      const startX = zoneRect.left + p.x;
+      const startY = zoneRect.top + p.y;
+      const angle = Math.random() * Math.PI * 2;
+      const distance = celebratory ? 22 + Math.random() * 62 : 8 + Math.random() * 25;
+
+      dot.style.left = `${startX}px`;
+      dot.style.top = `${startY}px`;
+      dot.style.setProperty("--x", `${Math.cos(angle) * distance}px`);
+      dot.style.setProperty("--y", `${Math.sin(angle) * distance}px`);
+      dot.style.setProperty("--d", `${.35 + Math.random() * .5}s`);
+
+      document.getElementById("fx-layer").appendChild(dot);
+      setTimeout(() => dot.remove(), 950);
+    }
+  }
+
+  window.addEventListener("resize", () => {
+    if (el.modal.classList.contains("open") && !state.scratching) {
+      resizeCanvas();
+      if (!state.revealed) drawScratchCoating();
+    }
+  });
+
+  function shade(hex, percent) {
+    const { r, g, b } = hexRgb(hex);
+    const factor = 1 + percent / 100;
+    return rgbHex(
+      Math.round(Math.max(0, Math.min(255, r * factor))),
+      Math.round(Math.max(0, Math.min(255, g * factor))),
+      Math.round(Math.max(0, Math.min(255, b * factor)))
+    );
+  }
+
+  function tint(hex, amount) {
+    const { r, g, b } = hexRgb(hex);
+    const p = amount / 100;
+    return rgbHex(
+      Math.round(r + (255 - r) * p),
+      Math.round(g + (255 - g) * p),
+      Math.round(b + (255 - b) * p)
+    );
+  }
+
+  function hexRgb(hex) {
+    let h = hex.replace("#", "");
+    if (h.length === 3) h = h.split("").map(c => c + c).join("");
+    return {
+      r: parseInt(h.slice(0,2), 16) || 0,
+      g: parseInt(h.slice(2,4), 16) || 0,
+      b: parseInt(h.slice(4,6), 16) || 0
+    };
+  }
+
+  function rgbHex(r, g, b) {
+    return "#" + [r, g, b].map(v => v.toString(16).padStart(2, "0")).join("");
+  }
+
+  function fallbackCover(accent) {
+    const a = normalizeAccent(accent);
+    const b = tint(a, 35);
+    const c = "#f3c84a";
     const svg = `
-      <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760">
-        <defs>
-          <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stop-color="${a}"/>
-            <stop offset="55%" stop-color="${b}"/>
-            <stop offset="100%" stop-color="${c}"/>
-          </linearGradient>
-          <radialGradient id="r" cx="78%" cy="18%" r="55%">
-            <stop offset="0%" stop-color="#ffffff" stop-opacity=".24"/>
-            <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
-          </radialGradient>
-        </defs>
+      <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760">
+        <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="${a}"/><stop offset=".6" stop-color="${b}"/><stop offset="1" stop-color="${c}"/>
+        </linearGradient></defs>
         <rect width="1200" height="760" fill="url(#g)"/>
-        <circle cx="980" cy="140" r="340" fill="url(#r)"/>
-        <circle cx="170" cy="700" r="290" fill="#ffffff" fill-opacity=".06"/>
-        <path d="M-30 550 C280 360 540 740 1230 420" fill="none" stroke="#fff" stroke-opacity=".12" stroke-width="36"/>
-        <text x="75" y="160" fill="#fff" font-size="70" font-family="Arial, sans-serif" font-weight="800">Easy Gold</text>
-        <text x="78" y="225" fill="#fff" fill-opacity=".84" font-size="27" font-family="Arial, sans-serif">Classic scratch card</text>
-      </svg>
-    `;
-
+        <path d="M-40 560 C300 330 620 770 1240 350" stroke="#fff" stroke-width="50" stroke-opacity=".13" fill="none"/>
+        <text x="82" y="175" fill="#fff" font-size="76" font-family="Arial" font-weight="800">Easy Gold</text>
+        <text x="85" y="232" fill="#fff" fill-opacity=".85" font-size="28" font-family="Arial" font-weight="600">CLASSIC RECHARGE CARD</text>
+      </svg>`;
     return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+  }
+
+  function fallbackBack() {
+    return fallbackCover(state.activeCard ? state.activeCard.accent : "#008542");
   }
 })();

@@ -28,13 +28,40 @@
       "accent": "red"
     },
     {
-      "id": "eg-004",
-      "name": "Easy Gold Classic",
-      "description": "Classic green-and-gold styling inspired by the old Easy Gold look.",
-      "barNumber": "0174 1111 2222",
+      "id": "eg-300-green",
+      "name": "Easy Gold Tk 300",
+      "description": "Classic green recharge-card look with a physical scratch-off experience.",
+      "barNumber": "1054 487 985 184",
+      "validity": "EXPIRES IN 21 DAYS AFTER RECHARGING",
+      "coverImage": "assets/easy-gold-01.svg",
+      "accent": "#008542"
+    },
+    {
+      "id": "eg-red",
+      "name": "Easy Gold Red",
+      "description": "Use any hex accent color to create another old-card variation.",
+      "barNumber": "0172 2468 1357",
       "validity": "VALIDITY: 30 DAYS",
+      "coverImage": "assets/easy-gold-02.svg",
+      "accent": "#b4202a"
+    },
+    {
+      "id": "eg-blue",
+      "name": "Easy Gold Blue",
+      "description": "Blue theme example for testing custom card accent colors.",
+      "barNumber": "0173 9876 5432",
+      "validity": "VALIDITY: 45 DAYS",
+      "coverImage": "assets/easy-gold-03.svg",
+      "accent": "#1769aa"
+    },
+    {
+      "id": "eg-black",
+      "name": "Easy Gold Black",
+      "description": "Black theme example with the same authentic scratch interaction.",
+      "barNumber": "0174 1111 2222",
+      "validity": "VALIDITY: 60 DAYS",
       "coverImage": "assets/easy-gold-04.svg",
-      "accent": "gold"
+      "accent": "#161616"
     }
   ]
 }
