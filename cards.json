@@ -1,0 +1,40 @@
+{
+  "cards": [
+    {
+      "id": "eg-001",
+      "name": "Easy Gold 300",
+      "description": "A classic scratch experience with a 30-day validity period.",
+      "barNumber": "0171 1234 5678",
+      "validity": "VALIDITY: 300 DAYS",
+      "coverImage": "assets/cards/gp_easy_300Tk_green.JPG",
+      "accent": "green"
+    },
+    {
+      "id": "eg-002",
+      "name": "Easy Gold 300",
+      "description": "Open the card and slide the scissors across the secret strip.",
+      "barNumber": "0172 2468 1357",
+      "validity": "VALIDITY: 300 DAYS",
+      "coverImage": "assets/cards/gp_easy_300Tk_red.jpg",
+      "accent": "red"
+    },
+    {
+      "id": "eg-003",
+      "name": "Easy Gold 50",
+      "description": "A premium-looking card with a simple one-swipe reveal.",
+      "barNumber": "0173 9876 5432",
+      "validity": "VALIDITY: 50 DAYS",
+      "coverImage": "assets/cards/gp_easy_50Tk_red.jpg",
+      "accent": "red"
+    },
+    {
+      "id": "eg-004",
+      "name": "Easy Gold Classic",
+      "description": "Classic green-and-gold styling inspired by the old Easy Gold look.",
+      "barNumber": "0174 1111 2222",
+      "validity": "VALIDITY: 30 DAYS",
+      "coverImage": "assets/easy-gold-04.svg",
+      "accent": "gold"
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760">
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0%" stop-color="#006f3c"/>
+    <stop offset="55%" stop-color="#00a96b"/>
+    <stop offset="100%" stop-color="#efc14b"/>
+  </linearGradient>
+  <radialGradient id="shine" cx="80%" cy="10%" r="60%">
+    <stop offset="0%" stop-color="#fff" stop-opacity=".30"/>
+    <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+  </radialGradient>
+</defs>
+<rect width="1200" height="760" rx="36" fill="url(#bg)"/>
+<rect width="1200" height="760" rx="36" fill="url(#shine)"/>
+<circle cx="1000" cy="90" r="330" fill="#fff" fill-opacity=".05"/>
+<circle cx="130" cy="690" r="300" fill="#fff" fill-opacity=".05"/>
+<path d="M-50 550 C230 320 500 720 1260 360" fill="none" stroke="#fff" stroke-opacity=".14" stroke-width="46"/>
+<path d="M-70 600 C280 410 600 760 1260 470" fill="none" stroke="#fff" stroke-opacity=".07" stroke-width="18"/>
+<rect x="72" y="78" width="1056" height="604" rx="28" fill="none" stroke="#fff" stroke-opacity=".18" stroke-width="2"/>
+<text x="88" y="170" fill="#fff" font-family="Arial, sans-serif" font-size="75" font-weight="800">Easy Gold</text>
+<text x="90" y="225" fill="#fff" fill-opacity=".85" font-family="Arial, sans-serif" font-size="28" font-weight="600">SCRATCH CARD</text>
+<circle cx="1010" cy="610" r="95" fill="#f4c542" fill-opacity=".92"/>
+<text x="948" y="620" fill="#006a35" font-family="Arial, sans-serif" font-size="26" font-weight="800">CLAIM</text>
+</svg>
