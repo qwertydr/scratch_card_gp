@@ -7,7 +7,11 @@
       "barNumber": "0171 1234 5678",
       "validity": "VALIDITY: 300 DAYS",
       "coverImage": "assets/cards/gp_easy_300Tk_green.JPG",
-      "accent": "green"
+      "accent": "#008542",
+      "price": "300",
+      "expiryDays": "300",
+      "expiryDaysBn": "৩০০",
+      "barcode": "6198-15982-17773"
     },
     {
       "id": "eg-002",
@@ -16,7 +20,11 @@
       "barNumber": "0172 2468 1357",
       "validity": "VALIDITY: 300 DAYS",
       "coverImage": "assets/cards/gp_easy_300Tk_red.jpg",
-      "accent": "red"
+      "accent": "#b4202a",
+      "price": "300",
+      "expiryDays": "300",
+      "expiryDaysBn": "৩০০",
+      "barcode": "6198-24681-13572"
     },
     {
       "id": "eg-003",
@@ -25,7 +33,11 @@
       "barNumber": "0173 9876 5432",
       "validity": "VALIDITY: 50 DAYS",
       "coverImage": "assets/cards/gp_easy_50Tk_red.jpg",
-      "accent": "red"
+      "accent": "#b4202a",
+      "price": "20",
+      "expiryDays": "50",
+      "expiryDaysBn": "৫০",
+      "barcode": "6198-24681-13572"
     },
     {
       "id": "eg-300-green",
@@ -34,7 +46,11 @@
       "barNumber": "1054 487 985 184",
       "validity": "EXPIRES IN 21 DAYS AFTER RECHARGING",
       "coverImage": "assets/easy-gold-01.svg",
-      "accent": "#008542"
+      "accent": "#008542",
+      "price": "300",
+      "expiryDays": "21",
+      "expiryDaysBn": "২১",
+      "barcode": "6198-15982-17773"
     },
     {
       "id": "eg-red",
@@ -43,7 +59,11 @@
       "barNumber": "0172 2468 1357",
       "validity": "VALIDITY: 30 DAYS",
       "coverImage": "assets/easy-gold-02.svg",
-      "accent": "#b4202a"
+      "accent": "#b4202a",
+      "price": "250",
+      "expiryDays": "30",
+      "expiryDaysBn": "৩০",
+      "barcode": "6198-24681-13572"
     },
     {
       "id": "eg-blue",
@@ -52,7 +72,11 @@
       "barNumber": "0173 9876 5432",
       "validity": "VALIDITY: 45 DAYS",
       "coverImage": "assets/easy-gold-03.svg",
-      "accent": "#1769aa"
+      "accent": "#1769aa",
+      "price": "200",
+      "expiryDays": "45",
+      "expiryDaysBn": "৪৫",
+      "barcode": "6198-98765-43210"
     },
     {
       "id": "eg-black",
@@ -61,7 +85,11 @@
       "barNumber": "0174 1111 2222",
       "validity": "VALIDITY: 60 DAYS",
       "coverImage": "assets/easy-gold-04.svg",
-      "accent": "#161616"
+      "accent": "#161616",
+      "price": "500",
+      "expiryDays": "60",
+      "expiryDaysBn": "৬০",
+      "barcode": "6198-11111-22222"
     }
   ]
 }

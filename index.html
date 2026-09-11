@@ -61,25 +61,45 @@
           </div>
 
           <div class="card-face card-back">
-            <div class="real-back">
-              <img id="real-back-image" src="assets/real-card-back.jpg" alt="Reference of the physical card back">
+            <!-- Completely HTML/CSS/JS-built reproduction of the printed card-back composition. -->
+            <div class="printed-back">
+              <div class="paper-grain"></div>
 
-              <div id="secret-zone" class="secret-zone">
-                <div class="secret-underlay">
-                  <div class="mini-barcode" aria-hidden="true"></div>
-                  <div class="secret-number">0171 1234 5678</div>
-                  <div class="mini-barcode barcode-right" aria-hidden="true"></div>
+              <div class="back-top-row">
+                <div id="secret-zone" class="secret-zone" aria-label="Scratch area">
+                  <div class="scratch-base">
+                    <div class="scratch-number" id="scratch-number">1054 487 985 184</div>
+                    <div class="scratch-strip-mark"></div>
+                  </div>
+                  <canvas id="scratch-canvas"></canvas>
+                  <div id="scissor" class="scissor" aria-hidden="true">✂</div>
+                  <div id="scratch-hint" class="scratch-hint">SCRATCH TO REVEAL</div>
                 </div>
 
-                <canvas id="scratch-canvas" aria-label="Scratch area"></canvas>
-                <div id="scissor" class="scissor">✂</div>
-
-                <div class="scratch-hint" id="scratch-hint">
-                  <span>DRAG TO SCRATCH</span>
+                <div class="expiry-box">
+                  <div class="expiry-en">Expires in <strong id="expiry-days">21 days</strong> after recharging</div>
+                  <div class="price-line"><span>TK</span> <strong id="card-price">300</strong></div>
+                  <div class="expiry-bn">রিচার্জ করার <strong id="expiry-days-bn">২১ দিন</strong> পর মেয়াদ শেষ হবে</div>
                 </div>
               </div>
 
-              <div class="authenticity-shine"></div>
+              <div class="printed-copy">
+                <p>Gently scratch off the covered area above to reveal the hidden number. Now dial <b>*555*hidden number#</b> from your mobile and press the send button.</p>
+                <p>You will soon receive a message on your mobile showing the account status. To check your account balance, dial <b>*566#</b> and press the send button.</p>
+                <p class="small-note">Recharge is also possible through the standard recharge service. Please tear off the used card after successfully recharging your account.</p>
+              </div>
+
+              <div class="bengali-copy" aria-hidden="true">
+                <p>উপরের আবৃত অংশ হালকা ভাবে ঘষে গোপন নম্বরটি জেনে নিন। এরপর আপনার মোবাইল থেকে ডায়াল করুন <b>*555*গোপন নম্বর#</b>।</p>
+                <p>কিছুক্ষণের মধ্যেই আপনি রিচার্জের তথ্য মোবাইলের স্ক্রিনে দেখতে পাবেন। ব্যালেন্স জানতে <b>*566#</b> ডায়াল করুন।</p>
+              </div>
+
+              <div class="barcode-area">
+                <div id="barcode" class="barcode" aria-label="Barcode"></div>
+                <div id="barcode-text" class="barcode-text">6198-15982-17773</div>
+              </div>
+
+              <div class="bottom-tear-note">PLEASE TEAR OFF THE USED CARD AFTER RECHARGING</div>
             </div>
           </div>
         </div>
@@ -87,7 +107,7 @@
 
       <div class="modal-copy">
         <h2 id="modal-title">Easy Gold</h2>
-        <p id="modal-description">Use the scissors to remove the silver coating from the number strip.</p>
+        <p id="modal-description">Use the scissors to remove the printed silver coating from the hidden number strip.</p>
 
         <div class="scratch-status">
           <div class="status-line">

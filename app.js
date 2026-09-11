@@ -34,10 +34,15 @@
     el.modal = document.getElementById("modal");
     el.cardShell = document.getElementById("card-shell");
     el.frontImage = document.getElementById("front-image");
-    el.realBackImage = document.getElementById("real-back-image");
     el.title = document.getElementById("modal-title");
     el.description = document.getElementById("modal-description");
     el.validity = document.getElementById("modal-validity");
+    el.scratchNumber = document.getElementById("scratch-number");
+    el.expiryDays = document.getElementById("expiry-days");
+    el.expiryDaysBn = document.getElementById("expiry-days-bn");
+    el.cardPrice = document.getElementById("card-price");
+    el.barcode = document.getElementById("barcode");
+    el.barcodeText = document.getElementById("barcode-text");
 
     el.zone = document.getElementById("secret-zone");
     el.canvas = document.getElementById("scratch-canvas");
@@ -83,7 +88,11 @@
         barNumber: String(card.barNumber ?? "0000 0000 0000"),
         validity: String(card.validity ?? "VALIDITY: 30 DAYS"),
         coverImage: String(card.coverImage ?? ""),
-        accent: normalizeAccent(card.accent)
+        accent: normalizeAccent(card.accent),
+        price: String(card.price ?? "300"),
+        expiryDays: String(card.expiryDays ?? extractDays(card.validity) ?? "21"),
+        expiryDaysBn: String(card.expiryDaysBn ?? toBanglaDigits(card.expiryDays ?? extractDays(card.validity) ?? "21")),
+        barcode: String(card.barcode ?? card.barcodeText ?? "6198-15982-17773")
       }));
       renderCards();
     } catch (error) {
@@ -91,6 +100,56 @@
       state.cards = [];
       renderCards();
     }
+  }
+
+  function extractDays(text) {
+    if (typeof text !== "string") return null;
+    const match = text.match(/(\d+)\s*days?/i);
+    return match ? match[1] : null;
+  }
+
+  function toBanglaDigits(value) {
+    const map = { "0":"০", "1":"১", "2":"২", "3":"৩", "4":"৪", "5":"৫", "6":"৬", "7":"৭", "8":"৮", "9":"৯" };
+    return String(value).replace(/[0-9]/g, d => map[d]);
+  }
+
+  function renderBarcode(value) {
+    const raw = String(value || "6198-15982-17773");
+    el.barcode.innerHTML = "";
+
+    // Decorative printed barcode. It is intentionally not advertised as a scannable Code 128/EAN.
+    let seed = 2166136261;
+    for (const ch of raw) {
+      seed ^= ch.charCodeAt(0);
+      seed = Math.imul(seed, 16777619);
+    }
+
+    const random = () => {
+      seed += 0x6D2B79F5;
+      let t = seed;
+      t = Math.imul(t ^ t >>> 15, t | 1);
+      t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+
+    const quiet = document.createElement("i");
+    quiet.style.width = "3px";
+    quiet.style.background = "transparent";
+    el.barcode.appendChild(quiet);
+
+    for (let i = 0; i < 180; i++) {
+      const bar = document.createElement("i");
+      const unit = 1 + Math.floor(random() * 4);
+      bar.style.width = `${unit}px`;
+      bar.style.background = i % 5 === 0 || random() > 0.17 ? "#111" : "#fff";
+      if (i % 29 === 0) bar.style.height = "94%";
+      el.barcode.appendChild(bar);
+    }
+
+    const end = document.createElement("i");
+    end.style.width = "3px";
+    end.style.background = "transparent";
+    el.barcode.appendChild(end);
   }
 
   function normalizeAccent(value) {
@@ -154,15 +213,16 @@
     el.title.textContent = card.name;
     el.description.textContent = "Use the scissors to remove the silver coating from the hidden number.";
     el.validity.textContent = card.validity;
+    el.scratchNumber.textContent = card.barNumber;
+    el.expiryDays.textContent = `${card.expiryDays} days`;
+    el.expiryDaysBn.textContent = `${card.expiryDaysBn} দিন`;
+    el.cardPrice.textContent = card.price;
+    el.barcodeText.textContent = card.barcode;
+    renderBarcode(card.barcode);
 
     el.frontImage.src = card.coverImage;
     el.frontImage.alt = `${card.name} front`;
     el.frontImage.onerror = () => el.frontImage.src = fallbackCover(card.accent);
-
-    el.realBackImage.onerror = () => {
-      el.realBackImage.onerror = null;
-      el.realBackImage.src = fallbackBack();
-    };
 
     resetScratch();
     el.cardShell.classList.remove("flipped");
@@ -540,9 +600,5 @@
         <text x="85" y="232" fill="#fff" fill-opacity=".85" font-size="28" font-family="Arial" font-weight="600">CLASSIC RECHARGE CARD</text>
       </svg>`;
     return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
-  }
-
-  function fallbackBack() {
-    return fallbackCover(state.activeCard ? state.activeCard.accent : "#008542");
   }
 })();
